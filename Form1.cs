@@ -19,6 +19,8 @@ namespace Battleship
             float h;
             float dh; // desired heading
             float s;
+            float ds; // desired speed
+            int engine; // 0 = full stop, 1 = ahead 1 quarter, 2 = ahead 1 half, 3 = ahead 3 quarters, 4 = ahead full 
             Bitmap original;
             public Ship(float X, float Y, float Heading, float Speed, string Filename)
             {
@@ -27,6 +29,8 @@ namespace Battleship
                 h = Heading;
                 dh = h;
                 s = Speed;
+                engine = 4;
+                ds = Speed;
                 original = new Bitmap(Filename);
                 original.MakeTransparent(original.GetPixel(0, 0));
             }
@@ -110,11 +114,51 @@ namespace Battleship
                 double Degrees = 90.0 - h;
                 // convert degrees to radians
                 double Radians = Degrees * (Math.PI / 180);
+                // check speed and change if needed
+                if (s != ds)
+                {
+                    if (ds < s)
+                    {
+                        s -= Math.Min(0.001F, s - ds);
+                    }
+                    else
+                    {
+                        s += Math.Min(0.001F, ds - s);
+                    }
+                }
                 // calculate x and y offset
                 float dx = s * (float)Math.Cos(Radians);
                 float dy = s * (float)Math.Sin(Radians);
                 x += dx;
                 y -= dy;
+            }
+
+            public void EngineUp()
+            {
+                if (engine < 4)
+                    ++engine;
+                switch (engine)
+                {
+                    case 0: ds = 0; break;
+                    case 1: ds = 0.25F; break;
+                    case 2: ds = 0.5F; break;
+                    case 3: ds = 0.75F; break;
+                    case 4: ds = 1.0F; break;
+                }
+            }
+
+            public void EngineDown()
+            {
+                if (engine > 0)
+                    --engine;
+                switch (engine)
+                {
+                    case 0: ds = 0; break;
+                    case 1: ds = 0.25F; break;
+                    case 2: ds = 0.5F; break;
+                    case 3: ds = 0.75F; break;
+                    case 4: ds = 1.0F; break;
+                }
             }
         }
 
@@ -175,6 +219,19 @@ namespace Battleship
             if (e.Y < 50)
             {
                 Missouri.DesiredHeading = Missouri.Heading;
+                return;
+            }
+
+            if ((e.X <= 100) && (e.Y >= pictureBox1.Height - 100))
+            {
+                Missouri.EngineDown();
+                return;
+            }
+
+            if ((e.X >= pictureBox1.Width - 100) && (e.Y >= pictureBox1.Height - 100))
+            {
+                Missouri.EngineUp();
+                return;
             }
         }
     }
