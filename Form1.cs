@@ -17,6 +17,7 @@ namespace Battleship
             float x;
             float y;
             float h;
+            float dh; // desired heading
             float s;
             Bitmap original;
             public Ship(float X, float Y, float Heading, float Speed, string Filename)
@@ -24,6 +25,7 @@ namespace Battleship
                 x = X;
                 y = Y;
                 h = Heading;
+                dh = h;
                 s = Speed;
                 original = new Bitmap(Filename);
                 original.MakeTransparent(original.GetPixel(0, 0));
@@ -44,7 +46,12 @@ namespace Battleship
             public float Heading
             {
                 get { return h; }
-                set { h = value; }
+            }
+
+            public float DesiredHeading
+            {
+                get { return dh; }
+                set { dh = value; }
             }
 
             public float Speed
@@ -87,6 +94,18 @@ namespace Battleship
 
             public void Move()
             {
+                //check heading and change if needed
+                if (h != dh)
+                {
+                    if (h < dh)
+                    {
+                        h += Math.Min(0.2F, dh - h);
+                    }
+                    else
+                    {
+                        h -= Math.Min(0.2F, h - dh);
+                    }
+                }
                 // convert heading to degrees
                 double Degrees = 90.0 - h;
                 // convert degrees to radians
@@ -138,6 +157,19 @@ namespace Battleship
                 timer1.Enabled = false;
             else
                 timer1.Enabled = true;
+        }
+
+        private void PictureBox1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if ((e.X >= pictureBox1.Width-100) && (e.Y <= 100))
+            {
+                Missouri.DesiredHeading += 45;
+            }
+
+            if (((e.X <= 100) && (e.Y <= 100)))
+            {
+                Missouri.DesiredHeading -= 45;
+            }
         }
     }
 }
