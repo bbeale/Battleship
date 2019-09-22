@@ -53,16 +53,51 @@ namespace Battleship
                 set { s = value; }
             }
 
+            public float BitmapWidth
+            {
+                get { return original.Width; }
+            }
+
+            public float BitmapHeight
+            {
+                get { return original.Height; }
+            }
+
             public Bitmap image
             {
-                get { return original; }
+                get { return rotateImage(original, h); }
+            }
+
+            private Bitmap rotateImage(Bitmap b, float angle)
+            {
+                //create a new empty bitmap to hold rotated image
+                Bitmap returnBitmap = new Bitmap(b.Width, b.Height);
+                //make a graphics object from the empty bitmap
+                Graphics g = Graphics.FromImage(returnBitmap);
+                //move rotation point to center of image
+                g.TranslateTransform((float)b.Width / 2, (float)b.Height / 2);
+                //rotate
+                g.RotateTransform(angle);
+                //move image back
+                g.TranslateTransform(-(float)b.Width / 2, -(float)b.Height / 2);
+                //draw passed in image onto graphics object
+                g.DrawImage(b, new Point(0, 0));
+                return returnBitmap;
+            }
+
+            public void Move()
+            {
+                // convert heading to degrees
+                double Degrees = 90.0 - h;
+                // convert degrees to radians
+                double Radians = Degrees * (Math.PI / 180);
+                // calculate x and y offset
+                float dx = s * (float)Math.Cos(Radians);
+                float dy = s * (float)Math.Sin(Radians);
+                x += dx;
+                y -= dy;
             }
         }
-
-        /*float X;
-        float Y;
-        float Heading;
-        float Speed;*/
 
         Ship Missouri;
 
@@ -70,64 +105,28 @@ namespace Battleship
         {
             InitializeComponent();
             Missouri = new Ship(pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp");
-
-            /*X = pictureBox1.Width / 2;
-            Y = pictureBox1.Height / 2;
-            Heading = 0;
-            Speed = 1.0F*/;
             timer1.Enabled = true;
         }
 
-/*        private void DrawCircle(Graphics g)
+        private void DrawCircle(Graphics g, float X, float Y)
         {
-            g.FillEllipse(new SolidBrush(Color.Red), X, Y, 20, 20);
-        }*/
-
-        private Bitmap rotateImage(Bitmap b, float angle)
-        {
-            //create a new empty bitmap to hold rotated image
-            Bitmap returnBitmap = new Bitmap(b.Width, b.Height);
-            //make a graphics object from the empty bitmap
-            Graphics g = Graphics.FromImage(returnBitmap);
-            //move rotation point to center of image
-            g.TranslateTransform((float)b.Width / 2, (float)b.Height / 2);
-            //rotate
-            g.RotateTransform(angle);
-            //move image back
-            g.TranslateTransform(-(float)b.Width / 2, -(float)b.Height / 2);
-            //draw passed in image onto graphics object
-            g.DrawImage(b, new Point(0, 0));
-            return returnBitmap;
+            g.FillEllipse(new SolidBrush(Color.Red), X - 3, Y - 3, 6, 6);
         }
 
         private void DrawView()
         {
             Bitmap View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             Graphics g = Graphics.FromImage(View);
-
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
-            //DrawCircle(g);
-            //Bitmap BB63 = new Bitmap("missouri-s1.bmp");
-            //BB63.MakeTransparent(BB63.GetPixel(0, 0));
-
-            Bitmap BB63 = rotateImage(Missouri.image, Missouri.Heading);
-            g.DrawImage(BB63, Missouri.X-BB63.Width/2, Missouri.Y - BB63.Height/2);
-            
+            g.DrawImage(Missouri.image, Missouri.X - Missouri.BitmapWidth / 2, Missouri.Y - Missouri.BitmapHeight / 2);
+            DrawCircle(g, Missouri.X, Missouri.Y);
             pictureBox1.Image = View;
             
         }
 
         private void Timer1_Tick_1(object sender, EventArgs e)
         {
-            // convert heading to degrees
-            double Degrees = 90.0 - Missouri.Heading;
-            // convert degrees to radians
-            double Radians = Degrees * (Math.PI / 180);
-            // calculate x and y offset
-            float dx = Missouri.Speed * (float)Math.Cos(Radians);
-            float dy = Missouri.Speed * (float)Math.Sin(Radians);
-            Missouri.X += dx;
-            Missouri.Y -= dy;
+            Missouri.Move();
             DrawView();
         }
 
