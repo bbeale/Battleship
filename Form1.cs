@@ -12,25 +12,76 @@ namespace Battleship
 {
     public partial class Form1 : Form
     {
-        float X;
+        class Ship
+        {
+            float x;
+            float y;
+            float h;
+            float s;
+            Bitmap original;
+            public Ship(float X, float Y, float Heading, float Speed, string Filename)
+            {
+                x = X;
+                y = Y;
+                h = Heading;
+                s = Speed;
+                original = new Bitmap(Filename);
+                original.MakeTransparent(original.GetPixel(0, 0));
+            }
+
+            public float X
+            {
+                get { return x; }
+                set { x = value; }
+            }
+
+            public float Y
+            {
+                get { return y; }
+                set { y = value; }
+            }
+
+            public float Heading
+            {
+                get { return h; }
+                set { h = value; }
+            }
+
+            public float Speed
+            {
+                get { return s; }
+                set { s = value; }
+            }
+
+            public Bitmap image
+            {
+                get { return original; }
+            }
+        }
+
+        /*float X;
         float Y;
         float Heading;
-        float Speed;
+        float Speed;*/
+
+        Ship Missouri;
 
         public Form1()
         {
             InitializeComponent();
-            X = pictureBox1.Width / 2;
+            Missouri = new Ship(pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp");
+
+            /*X = pictureBox1.Width / 2;
             Y = pictureBox1.Height / 2;
             Heading = 0;
-            Speed = 1.0F;
+            Speed = 1.0F*/;
             timer1.Enabled = true;
         }
 
-        private void DrawCircle(Graphics g)
+/*        private void DrawCircle(Graphics g)
         {
             g.FillEllipse(new SolidBrush(Color.Red), X, Y, 20, 20);
-        }
+        }*/
 
         private Bitmap rotateImage(Bitmap b, float angle)
         {
@@ -56,11 +107,11 @@ namespace Battleship
 
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
             //DrawCircle(g);
-            Bitmap BB63 = new Bitmap("missouri-s1.bmp");
-            BB63.MakeTransparent(BB63.GetPixel(0, 0));
+            //Bitmap BB63 = new Bitmap("missouri-s1.bmp");
+            //BB63.MakeTransparent(BB63.GetPixel(0, 0));
 
-            BB63 = rotateImage(BB63, Heading);
-            g.DrawImage(BB63, X-BB63.Width/2, Y - BB63.Height/2);
+            Bitmap BB63 = rotateImage(Missouri.image, Missouri.Heading);
+            g.DrawImage(BB63, Missouri.X-BB63.Width/2, Missouri.Y - BB63.Height/2);
             
             pictureBox1.Image = View;
             
@@ -69,15 +120,25 @@ namespace Battleship
         private void Timer1_Tick_1(object sender, EventArgs e)
         {
             // convert heading to degrees
-            double Degrees = 90.0 - Heading;
+            double Degrees = 90.0 - Missouri.Heading;
             // convert degrees to radians
             double Radians = Degrees * (Math.PI / 180);
             // calculate x and y offset
-            float dx = Speed * (float)Math.Cos(Radians);
-            float dy = Speed * (float)Math.Sin(Radians);
-            X += dx;
-            Y -= dy;
+            float dx = Missouri.Speed * (float)Math.Cos(Radians);
+            float dy = Missouri.Speed * (float)Math.Sin(Radians);
+            Missouri.X += dx;
+            Missouri.Y -= dy;
             DrawView();
+        }
+
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            pictureBox1.Width = this.Width - 16;
+            pictureBox1.Height = this.Height - 36;
+            if (pictureBox1.Height < 1)
+                timer1.Enabled = false;
+            else
+                timer1.Enabled = true;
         }
     }
 }
