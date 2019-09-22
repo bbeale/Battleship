@@ -164,11 +164,17 @@ namespace Battleship
             if ((e.X >= pictureBox1.Width-100) && (e.Y <= 100))
             {
                 Missouri.DesiredHeading += 45;
+                return;
             }
 
             if (((e.X <= 100) && (e.Y <= 100)))
             {
                 Missouri.DesiredHeading -= 45;
+                return;
+            }
+            if (e.Y < 50)
+            {
+                Missouri.DesiredHeading = Missouri.Heading;
             }
         }
     }
