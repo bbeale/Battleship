@@ -201,13 +201,13 @@ namespace Battleship
             }
         }
 
-        Ship Missouri;
+        System.Collections.ArrayList Ships;
 
+        Ship SelectedShip;
+        int SelectedShipIndex;
         int HeadsUpX;
         int HeadsUpY;
         Color HeadsUpColor;
-
-
 
         public Form1()
         {
@@ -215,8 +215,11 @@ namespace Battleship
             HeadsUpX = 100;
             HeadsUpY = 100;
             HeadsUpColor = Color.Orange;
-
-            Missouri = new Ship("Missouri", pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp");
+            Ships = new System.Collections.ArrayList();
+            Ships.Add(new Ship("Missouri", pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp"));
+            Ships.Add(new Ship("Iowa", pictureBox1.Width / 2, pictureBox1.Height / 2 + 152, 95, 0.25F, "missouri-s1.bmp"));
+            SelectedShipIndex = 0;
+            SelectedShip = (Ship)Ships[SelectedShipIndex];
             timer1.Enabled = true;
         }
 
@@ -236,13 +239,16 @@ namespace Battleship
             // draw HUD
             System.Drawing.Font font = new System.Drawing.Font("Sans Serif", 15.0F);
             SolidBrush brush = new SolidBrush(HeadsUpColor);
-            g.DrawString(Missouri.Name, font, brush, new PointF(HeadsUpX, HeadsUpY));
-            g.DrawString(Missouri.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
-            g.DrawString(Missouri.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
+            g.DrawString(SelectedShip.Name, font, brush, new PointF(HeadsUpX, HeadsUpY));
+            g.DrawString(SelectedShip.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
+            g.DrawString(SelectedShip.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
 
-            // draw ship
-            g.DrawImage(Missouri.image, Missouri.X - Missouri.BitmapWidth / 2, Missouri.Y - Missouri.BitmapHeight / 2);
-            DrawCircle(g, Missouri.X, Missouri.Y);
+            // draw ships
+            foreach (Ship ship in Ships)
+            {
+                g.DrawImage(ship.image, ship.X - ship.BitmapWidth / 2, ship.Y - ship.BitmapHeight / 2);
+                DrawCircle(g, ship.X, ship.Y);
+            }
 
             // display view
             pictureBox1.Image = View;
@@ -251,7 +257,9 @@ namespace Battleship
 
         private void Timer1_Tick_1(object sender, EventArgs e)
         {
-            Missouri.Move();
+            foreach (Ship ship in Ships)
+                ship.Move();
+
             DrawView();
         }
 
@@ -269,37 +277,48 @@ namespace Battleship
         {
             if ((e.X >= pictureBox1.Width-100) && (e.Y <= 100))
             {
-                Missouri.DesiredHeading += 45;
+                SelectedShip.DesiredHeading += 45;
                 return;
             }
 
             if (((e.X <= 100) && (e.Y <= 100)))
             {
-                Missouri.DesiredHeading -= 45;
+                SelectedShip.DesiredHeading -= 45;
                 return;
             }
             if (e.Y < 50)
             {
-                Missouri.DesiredHeading = Missouri.Heading;
+                SelectedShip.DesiredHeading = SelectedShip.Heading;
                 return;
             }
 
             if ((e.X <= 100) && (e.Y >= pictureBox1.Height - 100))
             {
-                Missouri.EngineDown();
+                SelectedShip.EngineDown();
                 return;
             }
 
             if ((e.X >= pictureBox1.Width - 100) && (e.Y >= pictureBox1.Height - 100))
             {
-                Missouri.EngineUp();
+                SelectedShip.EngineUp();
                 return;
             }
 
             if (e.Y >= pictureBox1.Height - 50)
             {
-                Missouri.EngineHold();
+                SelectedShip.EngineHold();
                 return;
+            }
+
+            if (e.X >= pictureBox1.Width - 50)
+            {
+                if (SelectedShipIndex < Ships.Count - 1)
+                    ++SelectedShipIndex;
+                
+                else
+                    SelectedShipIndex = 0;
+                                    
+                SelectedShip = (Ship)Ships[SelectedShipIndex];
             }
         }
     }
