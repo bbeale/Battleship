@@ -71,6 +71,12 @@ namespace Battleship
                 set { s = value; }
             }
 
+            public float DesiredSpeed
+            {
+                get { return ds; }
+                set { ds = value; }
+            }
+
             public float BitmapWidth
             {
                 get { return original.Width; }
@@ -142,8 +148,18 @@ namespace Battleship
 
             public void EngineUp()
             {
-                if (engine < 4)
+                if ((engine >= 0)&&(engine < 4))
                     ++engine;
+                if (s < 0.25F)
+                    engine = 1;
+                else
+                    if (s < 0.5F)
+                        engine = 2;
+                    else
+                    if (s < 0.75F)
+                        engine = 3;
+                    else
+                        engine = 4;
                 switch (engine)
                 {
                     case 0: ds = 0; break;
@@ -158,6 +174,16 @@ namespace Battleship
             {
                 if (engine > 0)
                     --engine;
+                if (s <= 0.25F)
+                    engine = 0;
+                else
+                    if (s <= 0.5F)
+                        engine = 1;
+                    else
+                        if (s <= 0.75F)
+                            engine = 2;
+                        else
+                            engine = 3;
                 switch (engine)
                 {
                     case 0: ds = 0; break;
@@ -166,6 +192,12 @@ namespace Battleship
                     case 3: ds = 0.75F; break;
                     case 4: ds = 1.0F; break;
                 }
+            }
+
+               public void EngineHold()
+            {
+                engine = -1;
+                ds = s;
             }
         }
 
@@ -261,6 +293,12 @@ namespace Battleship
             if ((e.X >= pictureBox1.Width - 100) && (e.Y >= pictureBox1.Height - 100))
             {
                 Missouri.EngineUp();
+                return;
+            }
+
+            if (e.Y >= pictureBox1.Height - 50)
+            {
+                Missouri.EngineHold();
                 return;
             }
         }
