@@ -14,6 +14,7 @@ namespace Battleship
     {
         class Ship
         {
+            string name;
             float x;
             float y;
             float h;
@@ -22,8 +23,9 @@ namespace Battleship
             float ds; // desired speed
             int engine; // 0 = full stop, 1 = ahead 1 quarter, 2 = ahead 1 half, 3 = ahead 3 quarters, 4 = ahead full 
             Bitmap original;
-            public Ship(float X, float Y, float Heading, float Speed, string Filename)
+            public Ship(string Name, float X, float Y, float Heading, float Speed, string Filename)
             {
+                name = Name;
                 x = X;
                 y = Y;
                 h = Heading;
@@ -33,6 +35,11 @@ namespace Battleship
                 ds = Speed;
                 original = new Bitmap(Filename);
                 original.MakeTransparent(original.GetPixel(0, 0));
+            }
+
+            public string Name
+            {
+                get { return name; }
             }
 
             public float X
@@ -164,10 +171,20 @@ namespace Battleship
 
         Ship Missouri;
 
+        int HeadsUpX;
+        int HeadsUpY;
+        Color HeadsUpColor;
+
+
+
         public Form1()
         {
             InitializeComponent();
-            Missouri = new Ship(pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp");
+            HeadsUpX = 100;
+            HeadsUpY = 100;
+            HeadsUpColor = Color.Orange;
+
+            Missouri = new Ship("Missouri", pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp");
             timer1.Enabled = true;
         }
 
@@ -180,9 +197,22 @@ namespace Battleship
         {
             Bitmap View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             Graphics g = Graphics.FromImage(View);
+            
+            // draw ocean background
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
+
+            // draw HUD
+            System.Drawing.Font font = new System.Drawing.Font("Sans Serif", 15.0F);
+            SolidBrush brush = new SolidBrush(HeadsUpColor);
+            g.DrawString(Missouri.Name, font, brush, new PointF(HeadsUpX, HeadsUpY));
+            g.DrawString(Missouri.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
+            g.DrawString(Missouri.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
+
+            // draw ship
             g.DrawImage(Missouri.image, Missouri.X - Missouri.BitmapWidth / 2, Missouri.Y - Missouri.BitmapHeight / 2);
             DrawCircle(g, Missouri.X, Missouri.Y);
+
+            // display view
             pictureBox1.Image = View;
             
         }
