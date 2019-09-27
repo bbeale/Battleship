@@ -205,9 +205,17 @@ namespace Battleship
 
         Ship SelectedShip;
         int SelectedShipIndex;
+
+        int ViewX, ViewY;
+        bool DragOn;
+        int DragOriginX, DragOriginY;
+
         int HeadsUpX;
         int HeadsUpY;
         Color HeadsUpColor;
+
+        Bitmap View;
+        Graphics g;
 
         public Form1()
         {
@@ -220,6 +228,14 @@ namespace Battleship
             Ships.Add(new Ship("Iowa", pictureBox1.Width / 2, pictureBox1.Height / 2 + 152, 95, 0.25F, "missouri-s1.bmp"));
             SelectedShipIndex = 0;
             SelectedShip = (Ship)Ships[SelectedShipIndex];
+
+            ViewX = 0;
+            ViewY = 0;
+            DragOn = false;
+
+            View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            g = Graphics.FromImage(View);
+
             timer1.Enabled = true;
         }
 
@@ -230,8 +246,8 @@ namespace Battleship
 
         private void DrawView()
         {
-            Bitmap View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-            Graphics g = Graphics.FromImage(View);
+            /*Bitmap View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            Graphics g = Graphics.FromImage(View);*/
             
             // draw ocean background
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
@@ -242,12 +258,13 @@ namespace Battleship
             g.DrawString(SelectedShip.Name, font, brush, new PointF(HeadsUpX, HeadsUpY));
             g.DrawString(SelectedShip.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
             g.DrawString(SelectedShip.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
+            g.DrawString("View: ("+ViewX.ToString()+", "+ViewY.ToString()+")", font, brush, new PointF(HeadsUpX, HeadsUpY + 75));
 
             // draw ships
             foreach (Ship ship in Ships)
             {
-                g.DrawImage(ship.image, ship.X - ship.BitmapWidth / 2, ship.Y - ship.BitmapHeight / 2);
-                DrawCircle(g, ship.X, ship.Y);
+                g.DrawImage(ship.image, ship.X - ViewX - ship.BitmapWidth / 2, ship.Y + ViewY - ship.BitmapHeight / 2);
+                DrawCircle(g, ship.X - ViewX, ship.Y + ViewY);
             }
 
             // display view
@@ -263,10 +280,38 @@ namespace Battleship
             DrawView();
         }
 
+        private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            DragOn = true;
+            DragOriginX = e.X;
+            DragOriginY = e.Y;
+
+        }
+
+        private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            DragOn = false;
+        }
+
+        private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (DragOn == true)
+            {
+                ViewX += DragOriginX - e.X;
+                ViewY -= DragOriginY - e.Y;
+                DragOriginX = e.X;
+                DragOriginY = e.Y;
+            }
+        }
+
         private void Form1_Resize(object sender, EventArgs e)
         {
             pictureBox1.Width = this.Width - 16;
             pictureBox1.Height = this.Height - 36;
+            // re declare graphics and bitmap
+            View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            g = Graphics.FromImage(View);
+
             if (pictureBox1.Height < 1)
                 timer1.Enabled = false;
             else
