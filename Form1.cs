@@ -200,11 +200,10 @@ namespace Battleship
                 ds = s;
             }
         }
-
-        System.Collections.ArrayList Ships;
-
+        
         Ship SelectedShip;
         int SelectedShipIndex;
+        System.Collections.ArrayList Ships;
 
         int ViewX, ViewY;
         bool DragOn;
@@ -213,6 +212,9 @@ namespace Battleship
         int HeadsUpX;
         int HeadsUpY;
         Color HeadsUpColor;
+
+        int HourGlass;
+        int HighlightState; // 1 = waxing, 2 = waning, 3 = hidden
 
         Bitmap View;
         Graphics g;
@@ -235,6 +237,9 @@ namespace Battleship
 
             View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g = Graphics.FromImage(View);
+
+            HourGlass = 100;
+            HighlightState = 3;
 
             timer1.Enabled = true;
         }
@@ -260,6 +265,40 @@ namespace Battleship
             g.DrawString(SelectedShip.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
             g.DrawString("View: ("+ViewX.ToString()+", "+ViewY.ToString()+")", font, brush, new PointF(HeadsUpX, HeadsUpY + 75));
 
+            // highlight selected ship
+            --HourGlass;
+            if (HourGlass == 0)
+            {
+                switch (HighlightState)
+                {
+                    case 1:     // waxing
+                        HourGlass = 10;
+                        HighlightState = 2;
+                        break;
+                    case 2:     // waning
+                        HourGlass = 10;
+                        HighlightState = 3;
+                        break;
+                    case 3:     // hidden
+                        HourGlass = 10;
+                        HighlightState = 1;
+                        break;
+                }
+            }
+            switch (HighlightState)
+            {
+                case 1:     // waxing
+                    g.DrawEllipse(new Pen(Color.FromArgb(100 - HourGlass * 10, Color.GreenYellow),3), SelectedShip.X - ViewX - 125, SelectedShip.Y + ViewY - 125, 250, 250);
+                    
+                    break;
+                case 2:     // waning
+                    g.DrawEllipse(new Pen(Color.FromArgb(HourGlass * 10, Color.GreenYellow), 3), SelectedShip.X - ViewX - 125, SelectedShip.Y + ViewY - 125, 250, 250);
+
+                    break;
+
+            }
+
+
             // draw ships
             foreach (Ship ship in Ships)
             {
@@ -269,7 +308,6 @@ namespace Battleship
 
             // display view
             pictureBox1.Image = View;
-            
         }
 
         private void Timer1_Tick_1(object sender, EventArgs e)
@@ -285,7 +323,6 @@ namespace Battleship
             DragOn = true;
             DragOriginX = e.X;
             DragOriginY = e.Y;
-
         }
 
         private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
