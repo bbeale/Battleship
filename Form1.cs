@@ -143,7 +143,7 @@ namespace Battleship
                 float dx = s * (float)Math.Cos(Radians);
                 float dy = s * (float)Math.Sin(Radians);
                 x += dx;
-                y -= dy;
+                y += dy;
             }
 
             public void EngineUp()
@@ -254,9 +254,9 @@ namespace Battleship
             MinimapPixelHeight = 200;
             MinimapWidth = 5000;
             MinimapHeight = 5000;
-            MinimapColor = Color.LightCyan;
-            MinimapSelectedShipColor = Color.Blue;
-            MinimapShipColor = Color.Goldenrod;
+            MinimapColor = Color.DarkBlue;
+            MinimapSelectedShipColor = Color.Orange;
+            MinimapShipColor = Color.Red;
             HourGlass = 100;
             HighlightState = 3;
 
@@ -294,10 +294,19 @@ namespace Battleship
                 int x = Convert.ToInt32(MinimapPixelWidth / 2.0F + s.X / UnitsPerPixel);
                 int y = Convert.ToInt32(MinimapPixelHeight / 2.0F - s.Y / UnitsPerPixel);
                 if (s == SelectedShip)
-                    gm.FillRectangle(new SolidBrush(MinimapSelectedShipColor), x, y, 2, 2);
+                    gm.FillRectangle(new SolidBrush(MinimapSelectedShipColor), x, y, 4, 4);
                 else
-                    gm.FillRectangle(new SolidBrush(MinimapShipColor), x, y, 2, 2);
+                    gm.FillRectangle(new SolidBrush(MinimapShipColor), x, y, 6, 6);
             }
+
+            // draw frame on minimap
+            int xc = ViewX - View.Width / 2;
+            int x1 = Convert.ToInt32(MinimapPixelWidth / 2.0F + xc / UnitsPerPixel);
+            int yc = ViewY + View.Height / 2;
+            int y1 = Convert.ToInt32(MinimapPixelHeight / 2.0F - yc / UnitsPerPixel);
+            int xw = Convert.ToInt32(View.Width / UnitsPerPixel);
+            int yw = Convert.ToInt32(View.Height / UnitsPerPixel);
+            gm.DrawRectangle(new Pen(Color.Green), x1, y1, xw, yw);
 
             // draw minimap onto main view
             MinimapX = View.Width - MinimapPixelWidth - 100;
@@ -334,9 +343,7 @@ namespace Battleship
                     g.DrawEllipse(new Pen(Color.FromArgb(HourGlass * 10, Color.GreenYellow), 3), SelectedShip.X - ViewX - 125 + pictureBox1.Width / 2, ViewY - SelectedShip.Y - 125 + pictureBox1.Height / 2, 250, 250);
 
                     break;
-
             }
-
 
             // draw ships
             foreach (Ship ship in Ships)
@@ -440,6 +447,15 @@ namespace Battleship
                     SelectedShipIndex = 0;
                                     
                 SelectedShip = (Ship)Ships[SelectedShipIndex];
+            }
+
+            if ((e.X >= MinimapX) && (e.X <=(MinimapX+ MinimapPixelWidth))&& (e.Y>=MinimapY)&&(e.Y <= (MinimapY + MinimapPixelHeight)))
+            {
+                int px = e.X - (MinimapX + MinimapPixelWidth / 2);
+                int py = e.Y - (MinimapY + MinimapPixelHeight / 2);
+                float UnitsPerPixel = MinimapWidth / MinimapPixelWidth;
+                ViewX = Convert.ToInt32(px * UnitsPerPixel);
+                ViewY = -1 * Convert.ToInt32(py * UnitsPerPixel);
             }
         }
     }
