@@ -226,8 +226,8 @@ namespace Battleship
             HeadsUpY = 100;
             HeadsUpColor = Color.Orange;
             Ships = new System.Collections.ArrayList();
-            Ships.Add(new Ship("Missouri", pictureBox1.Width / 2, pictureBox1.Height / 2, 75, 1.0F, "missouri-s1.bmp"));
-            Ships.Add(new Ship("Iowa", pictureBox1.Width / 2, pictureBox1.Height / 2 + 152, 95, 0.25F, "missouri-s1.bmp"));
+            Ships.Add(new Ship("Missouri", 0, 0, 75, 0, "missouri-s1.bmp"));
+            Ships.Add(new Ship("Iowa", 0, -150, 90, 0.25F, "missouri-s1.bmp"));
             SelectedShipIndex = 0;
             SelectedShip = (Ship)Ships[SelectedShipIndex];
 
@@ -251,9 +251,6 @@ namespace Battleship
 
         private void DrawView()
         {
-            /*Bitmap View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-            Graphics g = Graphics.FromImage(View);*/
-            
             // draw ocean background
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
 
@@ -288,11 +285,11 @@ namespace Battleship
             switch (HighlightState)
             {
                 case 1:     // waxing
-                    g.DrawEllipse(new Pen(Color.FromArgb(100 - HourGlass * 10, Color.GreenYellow),3), SelectedShip.X - ViewX - 125, SelectedShip.Y + ViewY - 125, 250, 250);
+                    g.DrawEllipse(new Pen(Color.FromArgb(100 - HourGlass * 10, Color.GreenYellow),3), SelectedShip.X - ViewX - 125 + pictureBox1.Width/2, ViewY - SelectedShip.Y - 125 + pictureBox1.Height / 2, 250, 250);
                     
                     break;
                 case 2:     // waning
-                    g.DrawEllipse(new Pen(Color.FromArgb(HourGlass * 10, Color.GreenYellow), 3), SelectedShip.X - ViewX - 125, SelectedShip.Y + ViewY - 125, 250, 250);
+                    g.DrawEllipse(new Pen(Color.FromArgb(HourGlass * 10, Color.GreenYellow), 3), SelectedShip.X - ViewX - 125 + pictureBox1.Width / 2, ViewY - SelectedShip.Y - 125 + pictureBox1.Height / 2, 250, 250);
 
                     break;
 
@@ -302,8 +299,8 @@ namespace Battleship
             // draw ships
             foreach (Ship ship in Ships)
             {
-                g.DrawImage(ship.image, ship.X - ViewX - ship.BitmapWidth / 2, ship.Y + ViewY - ship.BitmapHeight / 2);
-                DrawCircle(g, ship.X - ViewX, ship.Y + ViewY);
+                g.DrawImage(ship.image, ship.X - ViewX - ship.BitmapWidth / 2 + pictureBox1.Width / 2, ViewY - ship.Y - ship.BitmapHeight / 2 + pictureBox1.Height/2);
+                //DrawCircle(g, ship.X - ViewX, ship.Y + ViewY);
             }
 
             // display view
