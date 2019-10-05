@@ -213,6 +213,16 @@ namespace Battleship
         int HeadsUpY;
         Color HeadsUpColor;
 
+        int MinimapX, MinimapY;
+        int MinimapPixelWidth, MinimapPixelHeight;
+
+        // cartesian units
+        float MinimapWidth;
+        float MinimapHeight;
+        Color MinimapColor;
+        Color MinimapSelectedShipColor;
+        Color MinimapShipColor;
+
         int HourGlass;
         int HighlightState; // 1 = waxing, 2 = waning, 3 = hidden
 
@@ -238,6 +248,15 @@ namespace Battleship
             View = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g = Graphics.FromImage(View);
 
+            MinimapX = 0;
+            MinimapY = 0;
+            MinimapPixelWidth = 200;
+            MinimapPixelHeight = 200;
+            MinimapWidth = 5000;
+            MinimapHeight = 5000;
+            MinimapColor = Color.LightCyan;
+            MinimapSelectedShipColor = Color.Blue;
+            MinimapShipColor = Color.Goldenrod;
             HourGlass = 100;
             HighlightState = 3;
 
@@ -260,7 +279,30 @@ namespace Battleship
             g.DrawString(SelectedShip.Name, font, brush, new PointF(HeadsUpX, HeadsUpY));
             g.DrawString(SelectedShip.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
             g.DrawString(SelectedShip.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
-            g.DrawString("View: ("+ViewX.ToString()+", "+ViewY.ToString()+")", font, brush, new PointF(HeadsUpX, HeadsUpY + 75));
+            g.DrawString("(" + SelectedShip.X.ToString("f1") + "," + SelectedShip.Y.ToString("f1") + ")", font, brush, new PointF(HeadsUpX, HeadsUpY + 75));
+            g.DrawString("View: ("+ViewX.ToString()+", "+ViewY.ToString()+")", font, brush, new PointF(HeadsUpX, HeadsUpY + 100));
+
+            // minimap
+            Bitmap Minimap = new Bitmap(MinimapPixelWidth, MinimapPixelHeight);
+            Graphics gm = Graphics.FromImage(Minimap);
+            gm.FillRectangle(new SolidBrush(MinimapColor), 0, 0, MinimapPixelWidth, MinimapPixelHeight);
+
+            // draw ships on minimap
+            float UnitsPerPixel = MinimapWidth / MinimapPixelWidth;
+            foreach (Ship s in Ships)
+            {
+                int x = Convert.ToInt32(MinimapPixelWidth / 2.0F + s.X / UnitsPerPixel);
+                int y = Convert.ToInt32(MinimapPixelHeight / 2.0F - s.Y / UnitsPerPixel);
+                if (s == SelectedShip)
+                    gm.FillRectangle(new SolidBrush(MinimapSelectedShipColor), x, y, 2, 2);
+                else
+                    gm.FillRectangle(new SolidBrush(MinimapShipColor), x, y, 2, 2);
+            }
+
+            // draw minimap onto main view
+            MinimapX = View.Width - MinimapPixelWidth - 100;
+            MinimapY = 100;
+            g.DrawImage(Minimap, MinimapX, MinimapY);
 
             // highlight selected ship
             --HourGlass;
