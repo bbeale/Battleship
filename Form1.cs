@@ -12,6 +12,60 @@ namespace Battleship
 {
     public partial class Form1 : Form
     {
+        class Foam
+        {
+            double x, y; // global cartesian location
+            int age;
+            int ma; // max age
+            float r;
+            double dx, dy; // direction
+            public Foam(double X, double Y, float Radius, double Dx, double Dy, int Life)
+            {
+                x = X;
+                y = Y;
+                age = 0;
+                ma = Life;
+                r = Radius;
+                dx = Dx;
+                dy = Dy;
+            }
+            public double X
+            {
+                get { return x; }
+            }
+            public double Y
+            {
+                get { return y; }
+            }
+            public void Tick()
+            {
+                ++age;
+                // move foam
+                x += dx;
+                y += dy;
+            }
+            public void Draw(Graphics g, float bx, float by, float Scale) // Need global view coordinates or bitmap coordinates
+            {
+                int alpha = 255 - Convert.ToInt32(255 * ((float)age / ma));
+                if (alpha < 0) alpha = 0;
+                if (alpha > 255) alpha = 255;
+                SolidBrush b = new SolidBrush(Color.FromArgb(alpha, Color.White));
+                float r1 = r * Scale;
+                float d = 2 * r;
+                g.FillEllipse(b, bx - r1, by - r1, d, d);
+            }
+            public bool Visible
+            {
+                get
+                {
+                    if (age < ma)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+        } // end class Foam
+
         class Explosion
         {
             double x;
@@ -384,7 +438,7 @@ namespace Battleship
 
         // cartesian units
         float MinimapWidth;
-        float MinimapHeight;
+        // float MinimapHeight;
         Color MinimapColor;
         Color MinimapSelectedShipColor;
         Color MinimapEnemyShipColor;
@@ -397,6 +451,8 @@ namespace Battleship
 
         System.Collections.ArrayList Shells;
         System.Collections.ArrayList Explosions;
+        System.Collections.ArrayList Wake;
+        Random R;
 
         Bitmap View;
         Graphics g;
@@ -427,7 +483,7 @@ namespace Battleship
             MinimapPixelWidth = 200;
             MinimapPixelHeight = 200;
             MinimapWidth = 10000;
-            MinimapHeight = 10000;
+            // MinimapHeight = 10000;
             MinimapColor = Color.DarkBlue;
             MinimapSelectedShipColor = Color.DarkGreen;
             MinimapShipColor = Color.LightBlue;
@@ -440,15 +496,26 @@ namespace Battleship
             HighlightState = 3;
 
             Explosions = new System.Collections.ArrayList();
+            Wake = new System.Collections.ArrayList();
+            R = new Random();
 
             timer1.Enabled = true;
+        }
+
+        private float ConvertCartesianXtoBitmapX(Bitmap b, double CartesianX)
+        {
+            return b.Width / 2.0F + (float)(CartesianX - ViewX);
+        }
+
+        private float ConvertCartesianYtoBitmapY(Bitmap b, double CartesianY)
+        {
+            return b.Height / 2.0F - (float)(CartesianY - ViewY);
         }
 
         private void DrawCircle(Graphics g, float X, float Y)
         {
             g.FillEllipse(new SolidBrush(Color.Red), X - 3, Y - 3, 6, 6);
         }
-
 
         private void DrawExplosion(Graphics g, Explosion E)
         {
@@ -461,6 +528,14 @@ namespace Battleship
         {
             // draw ocean background
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
+            
+            // Draw wake
+            foreach (Foam f in Wake)
+            {
+                float BitmapX = ConvertCartesianXtoBitmapX(View, f.X);
+                float BitmapY = ConvertCartesianYtoBitmapY(View, f.Y);
+                f.Draw(g, BitmapX, BitmapY, 1.0F);
+            }
 
             foreach (Shell shell in Shells)
             {
@@ -569,7 +644,26 @@ namespace Battleship
 
             // display view
             pictureBox1.Image = View;
-        } 
+        }
+
+        private void IndicateMiss(double X, double Y)
+        {
+            // Add initial animation?
+            for (int i = 0; i < 18; i++) // wake
+            {
+                double a = (i * 20) * Math.PI / 180.0; // angle in radians
+                //double r = R.Next(100) * 0.05; // radius 0 to 5
+                double r = 3.0 + R.Next(10) * 0.1;
+                double x = r * Math.Cos(a);
+                double y = r * Math.Sin(a);
+                float Radius = (R.Next(30) + 10) / 20.0F;
+                // Note: fast dx, dy looks like explosion
+                double dx = 0.035 * Math.Cos(a);
+                double dy = 0.035 * Math.Sin(a);
+                Wake.Add(new Foam(X + x, Y + y, Radius, dx, dy, R.Next(300) + 50));
+            }
+            Wake.Add(new Foam(X, Y, 5.0F, 0, 0, 12)); // blast
+        }
 
         private void Timer1_Tick_1(object sender, EventArgs e)
         {
@@ -606,6 +700,7 @@ namespace Battleship
             {
                 if (Clock >= s.Time)    // hits impact point
                 {
+                    bool Miss = true;
                     foreach (Ship ship in Ships)
                     {
                         double d = Math.Sqrt((ship.X - s.X) * (ship.X - s.X) + (ship.Y - s.Y) * (ship.Y - s.Y));
@@ -613,10 +708,13 @@ namespace Battleship
                         {
                             ship.HP -= s.Damage;
                             Explosions.Add(new Explosion(s.X, s.Y, 75));
+                            Miss = false;
                         }
                     }
 
                     DeadShells.Add(s);
+                    if (Miss)
+                        IndicateMiss(s.X, s.Y);
                 }
             }
 
@@ -628,13 +726,30 @@ namespace Battleship
             // remove sunken ships 
             System.Collections.ArrayList DeadShips = new System.Collections.ArrayList();
             foreach (Ship ship in Ships)
-                if (ship.HP <= 0) DeadShips.Add(ship);
+            {
+                if (ship.HP <= 0) 
+                    DeadShips.Add(ship);
+            }
+                
             foreach (Ship ship in DeadShips)
             {
                 if (ship == SelectedShip)
                     GoToNextShip();
                 Ships.Remove(ship);
             }
+
+
+            // age foam
+            System.Collections.ArrayList DeadFoam = new System.Collections.ArrayList();
+            foreach (Foam f in Wake)
+            {
+                f.Tick();
+                if (f.Visible == false)
+                    DeadFoam.Add(f);
+            }
+
+            foreach (Foam f in DeadFoam)
+                Wake.Remove(f);
 
             DrawView();
         }
