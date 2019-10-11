@@ -12,9 +12,118 @@ namespace Battleship
 {
     public partial class Form1 : Form
     {
+        class Shell // Munition, Torpedo, Bomb, Projectile, Shot, Round, Ordnance, Ammunition, Weapon, Rocket, Missle
+        {
+            string type; // "16 in/50 caliber Mark 7"
+            int t; // time of impact
+            double x, y; // impact location in global coordinates
+            int damage;
+            public Shell(string Type, int Time, double X, double Y, int Damage)
+            {
+                type = Type;
+                t = Time;
+                x = X;
+                y = Y;
+                damage = Damage;
+            }
+            public string Type
+            {
+                get { return type; }
+            }
+            public int Time
+            {
+                get { return t; }
+            }
+            public double X
+            {
+                get { return x; }
+            }
+            public double Y
+            {
+                get { return y; }
+            }
+            public int Damage
+            {
+                get { return damage; }
+            }
+        }
+
+        class Gun
+        {
+            bool loaded;
+            string type;
+            double range; // in cartesian units
+            float velocity; // in cartesian untis
+            int loadtime;
+            int rttl; // Remaining Time To Load
+            Ship parent;
+            Ship target;
+            // number of shells?
+            // bitmap of gun
+            // location relative to ship center
+            // orientation of gun
+            // firing animation
+            public Gun(string Type, Ship Parent, double Range, float Velocity, int LoadDuration)
+            {
+                type = Type;
+                range = Range; // 2000.0
+                velocity = Velocity; // 8.0
+                loadtime = LoadDuration; // 200
+                rttl = 0;
+                loaded = true;
+                parent = Parent;
+                target = null;
+            }
+            public bool Loaded
+            {
+                get { return loaded; }
+                set { loaded = value; }
+            }
+            public Ship Target
+            {
+                get { return target; }
+                set { target = value; }
+            }
+            public double Range // Read-Only
+            {
+                get { return range; }
+            }
+            public void Operate(int Clock, System.Collections.ArrayList Shells)
+            {
+                if (loaded)
+                {
+                    if (target != null)
+                    {
+                        double d = Math.Sqrt((parent.X - target.X) * (parent.X - target.X) + (parent.Y - target.Y) * (parent.Y - target.Y)); // in cartesian units
+                        if (d < range) // Fire!
+                        {
+                            int flighttime = Convert.ToInt32(d / velocity);
+                            // predict location (d=rt)
+                            // Determine cartesian impact coordinates
+                            double degrees = -1 * (target.Heading - 90.0F); // target ship cartesain heading
+                            double radians = degrees * (Math.PI / 180.0);
+                            double ix = target.X + target.Speed * flighttime * Math.Cos(radians);
+                            double iy = target.Y + target.Speed * flighttime * Math.Sin(radians);
+                            // Create Shell, start Reload
+                            Shells.Add(new Shell("16in/50 caliber Mark 7", Clock + flighttime, ix, iy, 200));
+                            loaded = false;
+                            rttl = loadtime;
+                        }
+                    }
+                }
+                else
+                {
+                    --rttl;
+                    if (rttl == 0)
+                        loaded = true;
+                }
+            }
+        }
+
         class Ship
         {
             string name;
+            int hp;
             bool ff;    // true = friend, false = foe
             float x;
             float y;
@@ -37,11 +146,18 @@ namespace Battleship
                 original = new Bitmap(Filename);
                 original.MakeTransparent(original.GetPixel(0, 0));
                 ff = FriendOrFoe;
+                hp = 1000;
             }
 
             public string Name
             {
                 get { return name; }
+            }
+
+            public int HP
+            {
+                get { return hp; }
+                set { hp = value; }
             }
 
             public bool FriendOrFoe
@@ -234,6 +350,10 @@ namespace Battleship
         int HourGlass;
         int HighlightState; // 1 = waxing, 2 = waning, 3 = hidden
 
+        int Clock;
+
+        System.Collections.ArrayList Shells;
+
         Bitmap View;
         Graphics g;
 
@@ -268,6 +388,10 @@ namespace Battleship
             MinimapSelectedShipColor = Color.DarkGreen;
             MinimapShipColor = Color.LightBlue;
             MinimapEnemyShipColor = Color.Red;
+
+            Shells = new System.Collections.ArrayList();
+            Clock = 0;
+
             HourGlass = 100;
             HighlightState = 3;
 
@@ -374,6 +498,7 @@ namespace Battleship
 
         private void Timer1_Tick_1(object sender, EventArgs e)
         {
+            ++Clock; 
             foreach (Ship ship in Ships)
                 ship.Move();
 
