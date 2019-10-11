@@ -464,10 +464,10 @@ namespace Battleship
             HeadsUpY = 100;
             HeadsUpColor = Color.Orange;
             Ships = new System.Collections.ArrayList();
-            Ships.Add(new Ship("Carrier", 0, 0, 75, 0.25F, "carrier.bmp", true));
-            Ships.Add(new Ship("Iowa", 0, -250, 90, 0.25F, "missouri-s1.bmp", true));
-            Ships.Add(new Ship("Enemy 1", 2500, 2500, 215, 1.0F, "hood-s1.bmp", false));
-            Ships.Add(new Ship("Enemy 2", 2750, 2750, 215, 1.0F, "hood-s1.bmp", false));
+            Ships.Add(new Ship("Nimitz", 0, 0, 75, 0.25F, "carrier.bmp", true));
+            Ships.Add(new Ship("Missouri", 0, -250, 90, 0.25F, "missouri-s2.bmp", true));
+            Ships.Add(new Ship("ToonHood", 2500, 2500, 215, 1.0F, "hood-s1.bmp", false));
+            Ships.Add(new Ship("ToonMissouri", 2750, 2750, 215, 1.0F, "missouri-s1.bmp", false));
             SelectedShipIndex = 0;
             SelectedShip = (Ship)Ships[SelectedShipIndex];
 
@@ -712,7 +712,7 @@ namespace Battleship
                         }
                     }
 
-                    DeadShells.Add(s);
+                    DeadShells.Add(s); 
                     if (Miss)
                         IndicateMiss(s.X, s.Y);
                 }
@@ -738,6 +738,36 @@ namespace Battleship
                 Ships.Remove(ship);
             }
 
+            // draw ship wakes
+            foreach (Ship s in Ships)
+            {
+                int Rate = 1000000; // Rate = Infinity
+                if (s.Speed > 0.05)
+                {
+                    Rate = Convert.ToInt32(1 / s.Speed);
+                }
+                if (Clock % Rate == 0)
+                {
+                    double a = -1 * (s.Heading - 90);
+                    a = (Math.PI / 180) * a; // convert to radians
+                    // Starboard wake
+                    float x = -100 * (float)Math.Cos(a + 0.03);
+                    float y = -100 * (float)Math.Sin(a + 0.03);
+                    float sp = (400 - R.Next(200)) / 10000.0F; // Convert to function of speed of ship
+                    double dx = sp * Math.Cos(a + Math.PI / 2);
+                    double dy = sp * Math.Sin(a + Math.PI / 2);
+                    float Radius = (R.Next(50) + 1) / 25.0F;
+                    int Life = 400 + R.Next(200);
+                    Wake.Add(new Foam(s.X + x, s.Y + y, Radius, -dx, -dy, Life));
+                    // Port wake
+                    x = -100 * (float)Math.Cos(a - 0.03);
+                    y = -100 * (float)Math.Sin(a - 0.03);
+                    Radius = (R.Next(50) + 1) / 25.0F;
+                    // Recompute speed?
+                    Life = 400 + R.Next(200);
+                    Wake.Add(new Foam(s.X + x, s.Y + y, Radius, dx, dy, Life));
+                }
+            }
 
             // age foam
             System.Collections.ArrayList DeadFoam = new System.Collections.ArrayList();
