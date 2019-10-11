@@ -502,18 +502,22 @@ namespace Battleship
 
             // display view
             pictureBox1.Image = View;
-        }
+        } 
 
         private void Timer1_Tick_1(object sender, EventArgs e)
         {
             ++Clock; 
             foreach (Ship ship in Ships)
+            {
                 ship.Move();
+                ship.Gun.Operate(Clock, Shells);
+            }
 
             // assign targets
             foreach (Ship ship in Ships)
             {
                 double distance = 10000.0;
+                ship.Gun.Target = null;
 
                 foreach (Ship target in Ships)
                 {
@@ -551,6 +555,21 @@ namespace Battleship
             foreach (Shell s in DeadShells)
             {
                 Shells.Remove(s);
+            }
+
+            // remove sunken ships 
+            System.Collections.ArrayList DeadShips = new System.Collections.ArrayList();
+            foreach (Ship ship in Ships)
+            {
+                if (ship.HP <= 0)
+                    DeadShips.Add(ship);
+            }
+
+            foreach (Ship ship in DeadShips)
+            {
+                if (ship == SelectedShip)
+                    GoToNextShip();
+                Ships.Remove(ship);
             }
 
             DrawView();
@@ -593,6 +612,20 @@ namespace Battleship
                 timer1.Enabled = true;
         }
 
+        private void GoToNextShip()
+        {
+            int PossibleIndex = SelectedShipIndex;
+            do
+            {
+                if (PossibleIndex < Ships.Count - 1)
+                    ++PossibleIndex;
+                else
+                    PossibleIndex = 0;
+            } while (((Ship)Ships[PossibleIndex]).FriendOrFoe == false);
+            SelectedShipIndex = PossibleIndex;
+            SelectedShip = (Ship)Ships[SelectedShipIndex];
+        }
+
         private void PictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
             if ((e.X >= pictureBox1.Width-100) && (e.Y <= 100))
@@ -632,16 +665,7 @@ namespace Battleship
 
             if (e.X >= pictureBox1.Width - 50)
             {
-                int PossibleIndex = SelectedShipIndex;
-                do
-                {
-                    if (PossibleIndex < Ships.Count - 1)
-                        ++PossibleIndex;
-                    else
-                        PossibleIndex = 0;
-                } while (((Ship)Ships[PossibleIndex]).FriendOrFoe == false);
-                SelectedShipIndex = PossibleIndex;                         
-                SelectedShip = (Ship)Ships[SelectedShipIndex];
+                GoToNextShip();
             }
 
             if ((e.X >= MinimapX) && (e.X <=(MinimapX+ MinimapPixelWidth))&& (e.Y>=MinimapY)&&(e.Y <= (MinimapY + MinimapPixelHeight)))
