@@ -125,6 +125,7 @@ namespace Battleship
             string name;
             int hp;
             bool ff;    // true = friend, false = foe
+            Gun gun;
             float x;
             float y;
             float h;
@@ -147,6 +148,7 @@ namespace Battleship
                 original.MakeTransparent(original.GetPixel(0, 0));
                 ff = FriendOrFoe;
                 hp = 1000;
+                gun = new Gun("16 in/50 caliber Mark 7", this, 200, 08.0F, 200);
             }
 
             public string Name
@@ -163,6 +165,11 @@ namespace Battleship
             public bool FriendOrFoe
             {
                 get { return ff; }
+            }
+
+            public Gun Gun
+            {
+                get { return gun; }
             }
 
             public float X
@@ -415,7 +422,8 @@ namespace Battleship
             g.DrawString(SelectedShip.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
             g.DrawString(SelectedShip.Speed.ToString("f3"), font, brush, new PointF(HeadsUpX, HeadsUpY + 50));
             g.DrawString("(" + SelectedShip.X.ToString("f1") + "," + SelectedShip.Y.ToString("f1") + ")", font, brush, new PointF(HeadsUpX, HeadsUpY + 75));
-            g.DrawString("View: ("+ViewX.ToString()+", "+ViewY.ToString()+")", font, brush, new PointF(HeadsUpX, HeadsUpY + 100));
+            g.DrawString("HP " + SelectedShip.HP.ToString(),font, brush, new PointF(HeadsUpX, HeadsUpY + 100));
+            g.DrawString("View: (" + ViewX.ToString() + ", " + ViewY.ToString() + ")", font, brush, new PointF(HeadsUpX, HeadsUpY + 125));
 
             // minimap
             Bitmap Minimap = new Bitmap(MinimapPixelWidth, MinimapPixelHeight);
@@ -501,6 +509,49 @@ namespace Battleship
             ++Clock; 
             foreach (Ship ship in Ships)
                 ship.Move();
+
+            // assign targets
+            foreach (Ship ship in Ships)
+            {
+                double distance = 10000.0;
+
+                foreach (Ship target in Ships)
+                {
+                    if (ship.FriendOrFoe != target.FriendOrFoe)
+                    {
+                        double d = Math.Sqrt((ship.X - target.X) * (ship.X - target.X) + (ship.Y - target.Y) * (ship.Y - target.Y));
+                        if (d < distance)
+                        {
+                            distance = d;
+                            ship.Gun.Target = target;
+                        }
+                    }
+                }
+            }
+
+            // process in-flight shells
+            System.Collections.ArrayList DeadShells = new System.Collections.ArrayList();
+            foreach (Shell s in Shells)
+            {
+                if (Clock >= s.Time)    // hits impact point
+                {
+                    foreach (Ship ship in Ships)
+                    {
+                        double d = Math.Sqrt((ship.X - s.X) * (ship.X - s.X) + (ship.Y - s.Y) * (ship.Y - s.Y));
+                        if (d <= 10)    // hit! 
+                        {
+                            ship.HP -= s.Damage;
+                        }
+                    }
+
+                    DeadShells.Add(s);
+                }
+            }
+
+            foreach (Shell s in DeadShells)
+            {
+                Shells.Remove(s);
+            }
 
             DrawView();
         }
