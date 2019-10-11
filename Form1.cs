@@ -415,6 +415,11 @@ namespace Battleship
             // draw ocean background
             g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, View.Width, View.Height);
 
+            foreach (Shell shell in Shells)
+            {
+                DrawCircle(g, (float)(shell.X - ViewX + pictureBox1.Width / 2), (float)(ViewY - shell.Y + pictureBox1.Height / 2));
+            }
+
             // draw HUD
             System.Drawing.Font font = new System.Drawing.Font("Sans Serif", 15.0F);
             SolidBrush brush = new SolidBrush(HeadsUpColor);
@@ -496,7 +501,7 @@ namespace Battleship
             // draw ships
             foreach (Ship ship in Ships)
             {
-                g.DrawImage(ship.image, ship.X - ViewX - ship.BitmapWidth / 2 + pictureBox1.Width / 2, ViewY - ship.Y - ship.BitmapHeight / 2 + pictureBox1.Height/2);
+                g.DrawImage(ship.image, ship.X - ViewX - ship.BitmapWidth / 2 + pictureBox1.Width / 2, ViewY - ship.Y - ship.BitmapHeight / 2 + pictureBox1.Height / 2);
                 //DrawCircle(g, ship.X - ViewX, ship.Y + ViewY);
             }
 
