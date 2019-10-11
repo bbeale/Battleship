@@ -12,6 +12,42 @@ namespace Battleship
 {
     public partial class Form1 : Form
     {
+        class Explosion
+        {
+            double x;
+            double y;
+            int frame;
+            double size;
+            public Explosion(double X, double Y, double Size)
+            {
+                x = X;
+                y = Y;
+                size = Size;
+                frame = 1;
+            }
+            public double X // Read Only
+            {
+                get { return x; }
+            }
+            public double Y
+            {
+                get { return y; }
+            }
+            public int Frame
+            {
+                get { return frame; }
+                set { frame = value; }
+            }
+            public double Size
+            {
+                get { return size; }
+            }
+            public void Grow()
+            {
+                ++frame;
+            }
+        }
+
         class Shell // Munition, Torpedo, Bomb, Projectile, Shot, Round, Ordnance, Ammunition, Weapon, Rocket, Missle
         {
             string type; // "16 in/50 caliber Mark 7"
@@ -148,7 +184,7 @@ namespace Battleship
                 original.MakeTransparent(original.GetPixel(0, 0));
                 ff = FriendOrFoe;
                 hp = 1000;
-                gun = new Gun("16 in/50 caliber Mark 7", this, 200, 08.0F, 200);
+                gun = new Gun("16 in/50 caliber Mark 7", this, 2000, 8.0F, 200);
             }
 
             public string Name
@@ -360,6 +396,7 @@ namespace Battleship
         int Clock;
 
         System.Collections.ArrayList Shells;
+        System.Collections.ArrayList Explosions;
 
         Bitmap View;
         Graphics g;
@@ -402,12 +439,22 @@ namespace Battleship
             HourGlass = 100;
             HighlightState = 3;
 
+            Explosions = new System.Collections.ArrayList();
+
             timer1.Enabled = true;
         }
 
         private void DrawCircle(Graphics g, float X, float Y)
         {
             g.FillEllipse(new SolidBrush(Color.Red), X - 3, Y - 3, 6, 6);
+        }
+
+
+        private void DrawExplosion(Graphics g, Explosion E)
+        {
+            double r = Math.Sqrt(E.Size * E.Frame);
+            int green = 255 - (E.Frame - 1) * 50; // assumes 5 frames
+            g.FillEllipse(new SolidBrush(Color.FromArgb(255, green, 0)), (float)(E.X - ViewX + pictureBox1.Width / 2 - r), (float)(ViewY - E.Y + pictureBox1.Height / 2 - r), (float)(2 * r), (float)(2 * r));
         }
 
         private void DrawView()
@@ -421,7 +468,7 @@ namespace Battleship
             }
 
             // draw HUD
-            System.Drawing.Font font = new System.Drawing.Font("Sans Serif", 15.0F);
+            Font font = new Font("Sans Serif", 15.0F);
             SolidBrush brush = new SolidBrush(HeadsUpColor);
             g.DrawString(SelectedShip.Name, font, brush, new PointF(HeadsUpX, HeadsUpY));
             g.DrawString(SelectedShip.Heading.ToString("f2"), font, brush, new PointF(HeadsUpX, HeadsUpY + 25));
@@ -464,7 +511,7 @@ namespace Battleship
             // draw minimap onto main view
             MinimapX = View.Width - MinimapPixelWidth - 100;
             MinimapY = 100;
-            g.DrawImage(Minimap, MinimapX, MinimapY);
+            g.DrawImage(Minimap, MinimapX, MinimapY); 
 
             // highlight selected ship
             --HourGlass;
@@ -504,6 +551,21 @@ namespace Battleship
                 g.DrawImage(ship.image, ship.X - ViewX - ship.BitmapWidth / 2 + pictureBox1.Width / 2, ViewY - ship.Y - ship.BitmapHeight / 2 + pictureBox1.Height / 2);
                 //DrawCircle(g, ship.X - ViewX, ship.Y + ViewY);
             }
+
+            // draw explosions
+            System.Collections.ArrayList DeadExplosions = new System.Collections.ArrayList();
+            foreach (Explosion E in Explosions)
+            {
+                DrawExplosion(g, E);
+                E.Grow();
+                if (E.Frame == 6)
+                {
+                    DeadExplosions.Add(E);
+                }
+            }
+
+            foreach (Explosion E in DeadExplosions)
+                Explosions.Remove(E);
 
             // display view
             pictureBox1.Image = View;
@@ -550,6 +612,7 @@ namespace Battleship
                         if (d <= 10)    // hit! 
                         {
                             ship.HP -= s.Damage;
+                            Explosions.Add(new Explosion(s.X, s.Y, 75));
                         }
                     }
 
@@ -565,11 +628,7 @@ namespace Battleship
             // remove sunken ships 
             System.Collections.ArrayList DeadShips = new System.Collections.ArrayList();
             foreach (Ship ship in Ships)
-            {
-                if (ship.HP <= 0)
-                    DeadShips.Add(ship);
-            }
-
+                if (ship.HP <= 0) DeadShips.Add(ship);
             foreach (Ship ship in DeadShips)
             {
                 if (ship == SelectedShip)
