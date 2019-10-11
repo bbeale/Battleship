@@ -15,6 +15,7 @@ namespace Battleship
         class Ship
         {
             string name;
+            bool ff;    // true = friend, false = foe
             float x;
             float y;
             float h;
@@ -23,7 +24,7 @@ namespace Battleship
             float ds; // desired speed
             int engine; // 0 = full stop, 1 = ahead 1 quarter, 2 = ahead 1 half, 3 = ahead 3 quarters, 4 = ahead full 
             Bitmap original;
-            public Ship(string Name, float X, float Y, float Heading, float Speed, string Filename)
+            public Ship(string Name, float X, float Y, float Heading, float Speed, string Filename, bool FriendOrFoe)
             {
                 name = Name;
                 x = X;
@@ -35,11 +36,17 @@ namespace Battleship
                 ds = Speed;
                 original = new Bitmap(Filename);
                 original.MakeTransparent(original.GetPixel(0, 0));
+                ff = FriendOrFoe;
             }
 
             public string Name
             {
                 get { return name; }
+            }
+
+            public bool FriendOrFoe
+            {
+                get { return ff; }
             }
 
             public float X
@@ -221,6 +228,7 @@ namespace Battleship
         float MinimapHeight;
         Color MinimapColor;
         Color MinimapSelectedShipColor;
+        Color MinimapEnemyShipColor;
         Color MinimapShipColor;
 
         int HourGlass;
@@ -236,8 +244,10 @@ namespace Battleship
             HeadsUpY = 100;
             HeadsUpColor = Color.Orange;
             Ships = new System.Collections.ArrayList();
-            Ships.Add(new Ship("Missouri", 0, 0, 75, 0, "missouri-s1.bmp"));
-            Ships.Add(new Ship("Iowa", 0, -150, 90, 0.25F, "missouri-s1.bmp"));
+            Ships.Add(new Ship("Carrier", 0, 0, 75, 0.25F, "carrier.bmp", true));
+            Ships.Add(new Ship("Iowa", 0, -250, 90, 0.25F, "missouri-s1.bmp", true));
+            Ships.Add(new Ship("Enemy 1", 2500, 2500, 215, 1.0F, "hood-s1.bmp", false));
+            Ships.Add(new Ship("Enemy 2", 2750, 2750, 215, 1.0F, "hood-s1.bmp", false));
             SelectedShipIndex = 0;
             SelectedShip = (Ship)Ships[SelectedShipIndex];
 
@@ -252,11 +262,12 @@ namespace Battleship
             MinimapY = 0;
             MinimapPixelWidth = 200;
             MinimapPixelHeight = 200;
-            MinimapWidth = 5000;
-            MinimapHeight = 5000;
+            MinimapWidth = 10000;
+            MinimapHeight = 10000;
             MinimapColor = Color.DarkBlue;
-            MinimapSelectedShipColor = Color.Orange;
-            MinimapShipColor = Color.Red;
+            MinimapSelectedShipColor = Color.DarkGreen;
+            MinimapShipColor = Color.LightBlue;
+            MinimapEnemyShipColor = Color.Red;
             HourGlass = 100;
             HighlightState = 3;
 
@@ -293,10 +304,15 @@ namespace Battleship
             {
                 int x = Convert.ToInt32(MinimapPixelWidth / 2.0F + s.X / UnitsPerPixel);
                 int y = Convert.ToInt32(MinimapPixelHeight / 2.0F - s.Y / UnitsPerPixel);
-                if (s == SelectedShip)
-                    gm.FillRectangle(new SolidBrush(MinimapSelectedShipColor), x, y, 4, 4);
+                if (s.FriendOrFoe == true)
+                {
+                    if (s == SelectedShip)
+                        gm.FillRectangle(new SolidBrush(MinimapSelectedShipColor), x, y, 4, 4);
+                    else
+                        gm.FillRectangle(new SolidBrush(MinimapShipColor), x, y, 6, 6);
+                }
                 else
-                    gm.FillRectangle(new SolidBrush(MinimapShipColor), x, y, 6, 6);
+                    gm.FillRectangle(new SolidBrush(MinimapEnemyShipColor), x, y, 6, 6);
             }
 
             // draw frame on minimap
@@ -440,12 +456,15 @@ namespace Battleship
 
             if (e.X >= pictureBox1.Width - 50)
             {
-                if (SelectedShipIndex < Ships.Count - 1)
-                    ++SelectedShipIndex;
-                
-                else
-                    SelectedShipIndex = 0;
-                                    
+                int PossibleIndex = SelectedShipIndex;
+                do
+                {
+                    if (PossibleIndex < Ships.Count - 1)
+                        ++PossibleIndex;
+                    else
+                        PossibleIndex = 0;
+                } while (((Ship)Ships[PossibleIndex]).FriendOrFoe == false);
+                SelectedShipIndex = PossibleIndex;                         
                 SelectedShip = (Ship)Ships[SelectedShipIndex];
             }
 
